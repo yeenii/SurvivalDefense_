@@ -9,6 +9,12 @@ public class GunController : MonoBehaviour
 
     private float currentFireRate; //이 값이 0이되면 발사할 수 있게 값을 깎음
 
+    private AudioSource audioSource;
+
+    void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
 
     // Update is called once per frame
     void Update()
@@ -43,7 +49,15 @@ public class GunController : MonoBehaviour
 
     private void shoot() //발사 후
     {
+        PlaySE(currentGun.fire_Sound);
+        currentGun.muzzleFlash.Play();
         Debug.Log("총알 발사");
+    }
+
+    private void PlaySE(AudioClip _clip)
+    {
+        audioSource.clip = _clip;
+        audioSource.Play();
     }
 }
 
