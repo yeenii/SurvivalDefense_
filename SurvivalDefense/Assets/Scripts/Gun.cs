@@ -18,8 +18,8 @@ public class Gun : MonoBehaviour
     public int maxBulletCount; //최대 소유 가능 총알 개수
     public int carryBulletCount; //현재 소유하고 있는 총알 개수
 
-    public float retroActionForce; //반동세기 
-    public float retroActionFineSightForce; //정조준시의 반동 세기 
+    public float retroActionForce; //반동세기 (뒤로 밀리는 정도)
+    public float retroActionFineSightForce; //정조준시 최대 뒤로 밀릴 수 있는 세기  
 
     public Vector3 fineSightOriginPos;
     public Animator anim;

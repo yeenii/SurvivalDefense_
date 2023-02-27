@@ -49,6 +49,7 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody myRigid;
 
+    private GunController theGunController; //GunController 스크립트
 
     // Start is called before the first frame update
     void Start()
@@ -57,6 +58,9 @@ public class PlayerController : MonoBehaviour
         myRigid = GetComponent<Rigidbody>();
         //theCamera = FindObjectType<Camera>();
         applySpeed = walkSpeed;
+        theGunController = FindObjectOfType<GunController>();
+
+        //초기화
         originPosY = theCamera.transform.localPosition.y; //capsule의 position으로 하면 땅에 박힐 수 있기 때문에, camera로 함 
         applyCrouchPosY = originPosY;
     }
@@ -169,8 +173,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Running()
+    private void Running() //뛸 때 
     {
+        if (isCrouch)
+            Crouch();
+
+        theGunController.CancelFineSight(); //뛸 때, 정조준 해제 
+
         isRun = true;
         applySpeed = runSpeed;
     }
