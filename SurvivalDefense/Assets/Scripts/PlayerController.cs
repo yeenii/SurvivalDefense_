@@ -24,9 +24,13 @@ public class PlayerController : MonoBehaviour
 
 
     //상태변수
+    private bool isWalk = false;
     private bool isRun = false; //뛰는지 안 뛰는지
     private bool isCrouch = false;
-    private bool isGround = false;
+    private bool isGround = false; //점프했는지 안 했는지 
+
+    //움직임 체크 변수 
+    private Vector3 lastPos;
 
     //앉았을 때 얼마나 앉을지 결정하는 변수 
     [SerializeField]
@@ -51,16 +55,19 @@ public class PlayerController : MonoBehaviour
 
     private GunController theGunController; //GunController 스크립트
 
+    private Crosshair theCrosshair; //Crosshair 스크립트 
+
     // Start is called before the first frame update
     void Start()
     {
         capsuleCollider = GetComponent<CapsuleCollider>();
         myRigid = GetComponent<Rigidbody>();
         //theCamera = FindObjectType<Camera>();
-        applySpeed = walkSpeed;
         theGunController = FindObjectOfType<GunController>();
+        theCrosshair = FindObjectOfType<Crosshair>();
 
         //초기화
+        applySpeed = walkSpeed;
         originPosY = theCamera.transform.localPosition.y; //capsule의 position으로 하면 땅에 박힐 수 있기 때문에, camera로 함 
         applyCrouchPosY = originPosY;
     }
@@ -72,15 +79,20 @@ public class PlayerController : MonoBehaviour
         TryJump();
         TryRun();
         TryCrouch();
-        Move();
+        Move();   
         CameraRotation();//위아래 rotation
         CharacterRotation(); //좌우 rotation
+    }
+
+    void FixedUpdate()
+    {
+        MoveCheck();
     }
 
     //앉기 시도
     private void TryCrouch() //앉았다 일어나는 동작 구현 
     {
-        if (Input.GetKeyDown(KeyCode.LeftControl))
+        if (Input.GetKeyDown(KeyCode.LeftControl)) //Ctrl + left key 
         {
             Crouch();
         }
@@ -89,6 +101,7 @@ public class PlayerController : MonoBehaviour
     private void Crouch()
     {
         isCrouch = !isCrouch; //isCrouch가 false일 겨우 true로 변경하고, isCrouch가 true일 경우 false로 변경
+        theCrosshair.CrouchingAnimation(isCrouch);
 
         if (isCrouch) 
         {
@@ -129,10 +142,12 @@ public class PlayerController : MonoBehaviour
 
         
 
-    private void IsGround()
+    private void IsGround() //점프했는지 안 했는지. 지면체크
     {
         isGround = Physics.Raycast(transform.position, Vector3.down, capsuleCollider.bounds.extents.y + 0.1f);
         //Vecotr3.down : capsule의 아래로 ray 쏨 / capsuleCollider.bounds.extents.y : y값의 절반(extends)만큼 / 0.1f는 오차를 상쇄 
+
+        theCrosshair.RunningAnimation(!isGround); //isGround = true
 
     }
 
@@ -181,12 +196,14 @@ public class PlayerController : MonoBehaviour
         theGunController.CancelFineSight(); //뛸 때, 정조준 해제 
 
         isRun = true;
+        theCrosshair.RunningAnimation(isRun);
         applySpeed = runSpeed;
     }
 
-    private void RunningCancel()
+    private void RunningCancel() //달리기 취소 
     {
         isRun = false;
+        theCrosshair.RunningAnimation(isRun);
         applySpeed = walkSpeed;
 
     }
@@ -210,6 +227,26 @@ public class PlayerController : MonoBehaviour
 
         myRigid.MovePosition(transform.position + _velocity * Time.deltaTime); 
 
+    }
+
+    private void MoveCheck() //변경될 때 마다 크로스헤어 변경 
+    {
+        //lastPos : 전 프레임
+        //transform.position : 현재 프레임 
+        //경사로가 있는 경우, 0.0001 차이가 날 경우 미끄러질 수 있음 -> 그럼 걷고있다고 인식 -> 크로스헤어 벌어짐
+        //이를 방지하기 위해 Vector3.Distance를 사용 
+        if (!isRun && !isCrouch && isGround) //isRun = false //뛰지않고, 웅크리지 않고, 점프 안 했을 때만 체크한다
+        {
+            //Vector2.Distance만 설정할 경우, 움직일 때 Walk <-> Idle 왔다갔다 하므로 W,A,S,D 키를 눌렀을 때 true가 되도록 설정 
+            if (Vector3.Distance(lastPos, transform.position)>=0.01f || Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D))
+                isWalk = true;
+            else
+                isWalk = false;
+
+            theCrosshair.WalkingAnimation(isWalk);
+        }
+        
+        lastPos = transform.position;
     }
 
     private void CharacterRotation() //좌우
